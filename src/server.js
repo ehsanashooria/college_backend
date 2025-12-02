@@ -26,6 +26,7 @@ const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100 // limit each IP to 100 requests per windowMs
 });
+
 app.use('/api', limiter);
 
 // Body parser
@@ -33,7 +34,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Importing routes
-app.use('/api/users', require('./routes/userRoutes'));
+const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
+
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

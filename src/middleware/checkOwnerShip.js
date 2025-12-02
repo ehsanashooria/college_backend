@@ -7,7 +7,7 @@ const checkOwnership = (Model, resourceIdParam = 'id') => {
             if (!resource) {
                 return res.status(404).json({
                     success: false,
-                    message: 'Resource not found'
+                    message: 'منبع یافت نشد'
                 });
             }
 
@@ -24,7 +24,7 @@ const checkOwnership = (Model, resourceIdParam = 'id') => {
             } else {
                 return res.status(403).json({
                     success: false,
-                    message: 'You are not authorized to access this resource'
+                    message: 'شما به این منبع دسترسی ندارید'
                 });
             }
         } catch (error) {

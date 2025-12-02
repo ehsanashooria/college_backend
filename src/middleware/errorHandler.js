@@ -10,14 +10,14 @@ const errorHandler = (err, req, res, next) => {
 
     // Mongoose bad ObjectId (invalid ID format)
     if (err.name === 'CastError') {
-        const message = `Resource not found with id: ${err.value}`;
+        const message = `منبع با آیدی ${err.value} یافت نشد`;
         error = { message, statusCode: 404 };
     }
 
     // Mongoose duplicate key error (E11000)
     if (err.code === 11000) {
         const field = Object.keys(err.keyPattern)[0];
-        const message = `This ${field} is already registered. Please use a different ${field}.`;
+        const message = `فیلد ${field} موجود است`;
         error = { message, statusCode: 400 };
     }
 
@@ -31,12 +31,12 @@ const errorHandler = (err, req, res, next) => {
 
     // JWT errors
     if (err.name === 'JsonWebTokenError') {
-        const message = 'Invalid token. Please log in again.';
+        const message = 'توکن شما نامعتبر است';
         error = { message, statusCode: 401 };
     }
 
     if (err.name === 'TokenExpiredError') {
-        const message = 'Your token has expired. Please log in again.';
+        const message = 'توکن شما منقضی شده است. لطفا دوباره ورود کنید';
         error = { message, statusCode: 401 };
     }
 

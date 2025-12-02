@@ -6,7 +6,7 @@ const validateRequest = (req, res, next) => {
     if (!errors.isEmpty()) {
         return res.status(400).json({
             success: false,
-            message: 'Validation failed',
+            message: 'اطلاعات وارد شده نامعتبر است',
             errors: errors.array().map(err => ({
                 field: err.path || err.param,
                 message: err.msg,
