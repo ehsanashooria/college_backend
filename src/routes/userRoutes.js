@@ -17,26 +17,30 @@ const updateUserValidation = [
     body('firstName')
         .optional()
         .trim()
-        .notEmpty().withMessage('First name cannot be empty')
-        .isLength({ max: 50 }).withMessage('First name cannot exceed 50 characters'),
+        .notEmpty().withMessage('نام نمی تواند خالی باشد')
+        .isLength({ max: 50 }).withMessage('نام نباید بیشتر از 50 کاراکتر باشد'),
     body('lastName')
         .optional()
         .trim()
-        .notEmpty().withMessage('Last name cannot be empty')
-        .isLength({ max: 50 }).withMessage('Last name cannot exceed 50 characters'),
+        .notEmpty().withMessage('نام خانوادگی نمی تواند خالی باشد')
+        .isLength({ max: 50 }).withMessage('نام خانوادگی نباید بیشتر از 50 کاراکتر باشد'),
     body('email')
         .optional()
-        .isEmail().withMessage('Please provide a valid email')
+        .isEmail().withMessage('لطفا یک ایمیل معتبر وارد کنید')
         .normalizeEmail(),
     body('role')
         .optional()
-        .isIn(['student', 'instructor', 'admin']).withMessage('Invalid role'),
-    body('isActive')
-        .optional()
-        .isBoolean().withMessage('isActive must be a boolean'),
+        .isIn(['student', 'instructor']).withMessage('نقش کاربر نامعتبر است'),
     body('isEmailVerified')
         .optional()
-        .isBoolean().withMessage('isEmailVerified must be a boolean')
+        .isBoolean().withMessage('وضعیت تایید ایمیل باید true/false باشد'),
+    body('expertise')
+        .optional()
+        .isArray().withMessage('نوع فیلد تخصص ها باید از نوع آرایه یا لیست باشد'),
+    body('expertise.*')
+        .optional()
+        .trim()
+        .notEmpty().withMessage('تخصص ها نمی توانند متن خالی باشند')
 ];
 
 // All routes are protected and admin only

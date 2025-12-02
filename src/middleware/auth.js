@@ -3,44 +3,52 @@ const User = require('../models/User');
 
 // Protect routes - verify JWT token
 exports.protect = async (req, res, next) => {
-    let token;
+  let token;
 
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-        token = req.headers.authorization.split(' ')[1];
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: 'شما مجوز دسترسی به این منبع را ندارید'
+    });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await User.findById(decoded.id);
+
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'کاربر مورد نظر یافت نشد'
+      });
     }
 
-    if (!token) {
-        return res.status(401).json({
-            success: false,
-            message: 'شما مجوز دسترسی ندارید'
-        });
+    if (!req.user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: 'حساب کاربری شما غیرفعال شده است'
+      });
     }
 
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = await User.findById(decoded.id);
-
-        if (!req.user) {
-            return res.status(401).json({
-                success: false,
-                message: 'کاربر مورد نظر پیدا نشد'
-            });
-        }
-
-        if (!req.user.isActive) {
-            return res.status(401).json({
-                success: false,
-                message: 'حساب کاربری شما غیر فعال شده است'
-            });
-        }
-
-        next();
-    } catch (error) {
-        return res.status(401).json({
-            success: false,
-            message: 'شما مجوز دسترسی ندارید'
-        });
+    // Check if token version matches (invalidate old tokens after password change)
+    if (decoded.tokenVersion !== req.user.tokenVersion) {
+      return res.status(401).json({
+        success: false,
+        message: 'لطفا دوباره وارد شوید'
+      });
     }
+
+    next();
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      message: 'شما مجوز دسترسی به این منبع را ندارید'
+    });
+  }
 };
 
 // Grant access to specific roles

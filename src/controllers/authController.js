@@ -2,8 +2,8 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 
 // Generate JWT Token
-const generateToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, {
+const generateToken = (user, tokenVersion) => {
+    return jwt.sign({ id: user._id, role: user.role, tokenVersion }, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRE
     });
 };
@@ -41,7 +41,7 @@ exports.register = async (req, res, next) => {
             role: userRole
         });
 
-        const token = generateToken(user._id);
+        const token = generateToken(user, user.tokenVersion);
 
         res.status(201).json({
             success: true,
@@ -52,8 +52,11 @@ exports.register = async (req, res, next) => {
                 lastName: user.lastName,
                 fullName: user.fullName,
                 email: user.email,
-                token
+                role: user.role,
+                avatar: user.avatar,
+                isEmailVerified: user.isEmailVerified
             },
+            token
         });
     } catch (error) {
         next(error);
@@ -71,48 +74,47 @@ exports.login = async (req, res, next) => {
         if (!email || !password) {
             return res.status(400).json({
                 success: false,
-                message: 'Please provide email and password'
+                message: 'فیلد های رمز و ایمیل اجباری هستند'
             });
         }
 
-        // Check for user (include password field)
+        // Force include password because password is hidden by default for queries
         const user = await User.findOne({ email }).select('+password');
 
         if (!user) {
             return res.status(401).json({
                 success: false,
-                message: 'Invalid email or password'
+                message: 'ایمیل یا رمز عبور شما اشتباه است'
             });
         }
 
-        // Check if user is active
         if (!user.isActive) {
             return res.status(401).json({
                 success: false,
-                message: 'Your account has been deactivated. Please contact support.'
+                message: 'حساب کاربری شما مسدود شده است. لطفا با پشتیبانی تماس بگیرید'
             });
         }
 
-        // Check if password matches
+        // Compare password using the schema method
         const isMatch = await user.comparePassword(password);
 
         if (!isMatch) {
             return res.status(401).json({
                 success: false,
-                message: 'Invalid email or password'
+                message: 'ایمیل یا رمز عبور شما اشتباه است'
             });
         }
 
-        // Update last login
+        // Login the user 👇
         user.lastLogin = Date.now();
+        // Don't validate the whole document (old invalid data should not break the login flow)
         await user.save({ validateBeforeSave: false });
 
-        // Generate token
-        const token = generateToken(user._id);
+        const token = generateToken(user, user.tokenVersion);
 
         res.status(200).json({
             success: true,
-            message: 'Login successful',
+            message: 'ورود با موفقیت انجام شد',
             data: {
                 _id: user._id,
                 firstName: user.firstName,
@@ -153,6 +155,7 @@ exports.getMe = async (req, res, next) => {
 // @route   PUT /api/auth/updateprofile
 // @access  Private
 exports.updateProfile = async (req, res, next) => {
+    // Field for update: firstName, lastName, bio, avatar, expertise
     try {
         const fieldsToUpdate = {
             firstName: req.body.firstName,
@@ -167,9 +170,9 @@ exports.updateProfile = async (req, res, next) => {
         }
 
         // Remove undefined fields
-        Object.keys(fieldsToUpdate).forEach(key =>
-            fieldsToUpdate[key] === undefined && delete fieldsToUpdate[key]
-        );
+        Object.keys(fieldsToUpdate).forEach((key) => {
+            if (fieldsToUpdate[key] === undefined) delete fieldsToUpdate[key];
+        });
 
         const user = await User.findByIdAndUpdate(
             req.user.id,
@@ -182,7 +185,7 @@ exports.updateProfile = async (req, res, next) => {
 
         res.status(200).json({
             success: true,
-            message: 'Profile updated successfully',
+            message: 'اطلاعات شما با موفقیت به‌روزرسانی شد',
             data: user
         });
     } catch (error) {
@@ -200,7 +203,7 @@ exports.updatePassword = async (req, res, next) => {
         if (!currentPassword || !newPassword) {
             return res.status(400).json({
                 success: false,
-                message: 'Please provide current password and new password'
+                message: 'لطفا رمز جاری و رمز جدید را وارد کنید'
             });
         }
 
@@ -213,23 +216,49 @@ exports.updatePassword = async (req, res, next) => {
         if (!isMatch) {
             return res.status(401).json({
                 success: false,
-                message: 'Current password is incorrect'
+                message: 'رمز شما نامعتبر است'
             });
         }
 
         // Update password
         user.password = newPassword;
+
+        // Increment token version to invalidate all existing tokens
+        user.tokenVersion += 1;
+
         await user.save();
 
-        // Generate new token
-        const token = generateToken(user._id);
+        // Generate new token with new version
+        const token = generateToken(user._id, user.tokenVersion);
 
         res.status(200).json({
             success: true,
-            message: 'Password updated successfully',
+            message: 'رمز شما با موفقیت تغییر کرد',
             token
         });
     } catch (error) {
         next(error);
     }
 };
+// @route   POST /api/auth/logoutall
+// @access  Private
+// exports.logoutAllDevices = async (req, res, next) => {
+//     try {
+//         const user = await User.findById(req.user.id);
+
+//         // Increment token version to invalidate all existing tokens
+//         user.tokenVersion += 1;
+//         await user.save({ validateBeforeSave: false });
+
+//         // Generate new token with new version
+//         const token = generateToken(user._id, user.tokenVersion);
+
+//         res.status(200).json({
+//             success: true,
+//             message: 'Logged out from all devices successfully. Use the new token to continue.',
+//             token
+//         });
+//     } catch (error) {
+//         next(error);
+//     }
+// };

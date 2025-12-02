@@ -34,40 +34,40 @@ const registerValidation = [
 
 const loginValidation = [
     body('email')
-        .isEmail().withMessage('Please provide a valid email')
+        .isEmail().withMessage('لطفا ایمیل معتبر وارد کنید')
         .normalizeEmail(),
     body('password')
-        .notEmpty().withMessage('Password is required')
+        .notEmpty().withMessage('وارد کردن رمز اجباری است')
 ];
 
 const updateProfileValidation = [
     body('firstName')
         .optional()
         .trim()
-        .notEmpty().withMessage('First name cannot be empty')
-        .isLength({ max: 50 }).withMessage('First name cannot exceed 50 characters'),
+        .notEmpty().withMessage('وارد کردن نام اجباری است')
+        .isLength({ max: 50 }).withMessage('نام نباید بیشتر از 50 کاراکتر باشد'),
     body('lastName')
         .optional()
         .trim()
-        .notEmpty().withMessage('Last name cannot be empty')
-        .isLength({ max: 50 }).withMessage('Last name cannot exceed 50 characters'),
+        .notEmpty().withMessage('وارد کردن نام خانوادگی اجباری است')
+        .isLength({ max: 50 }).withMessage('نام خانوادگی نباید بیشتر از 50 کاراکتر باشد'),
     body('bio')
         .optional()
-        .isLength({ max: 500 }).withMessage('Bio cannot exceed 500 characters'),
+        .isLength({ max: 500 }).withMessage('بیوگرافی نباید بیشتر از 500 کاراکتر باشد'),
     body('expertise')
         .optional()
-        .isArray().withMessage('Expertise must be an array'),
+        .isArray().withMessage('نوع فیلد تخصص ها باید از نوع آرایه یا لیست باشد'),
     body('expertise.*')
         .optional()
         .trim()
-        .notEmpty().withMessage('Expertise item cannot be empty')
+        .notEmpty().withMessage('تخصص ها نمی توانند متن خالی باشند')
 ];
 
 const updatePasswordValidation = [
     body('currentPassword')
-        .notEmpty().withMessage('Current password is required'),
+        .notEmpty().withMessage('فیلد رمز جاری اجباری است'),
     body('newPassword')
-        .isLength({ min: 6 }).withMessage('New password must be at least 6 characters')
+        .isLength({ min: 6 }).withMessage('رمز جدید شما باید حداقل 6 کاراکتر باشد')
 ];
 
 // Public

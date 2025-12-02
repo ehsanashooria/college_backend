@@ -8,9 +8,15 @@ exports.getUsers = async (req, res, next) => {
         // Filter options
         const filter = {};
 
-        // Filter by role
+        // Always exclude admins
+        filter.role = { $ne: 'admin' };
+
+        // If user wants a specific role (but NOT admin)
         if (req.query.role) {
-            filter.role = req.query.role;
+            filter.role = {
+                $ne: 'admin',
+                $eq: req.query.role
+            };
         }
 
         // Filter by active status
@@ -64,7 +70,7 @@ exports.getUserById = async (req, res, next) => {
         if (!user) {
             return res.status(404).json({
                 success: false,
-                message: 'User not found'
+                message: 'کاربر یافت نشد'
             });
         }
 
@@ -94,9 +100,9 @@ exports.updateUser = async (req, res, next) => {
         };
 
         // Remove undefined fields
-        Object.keys(fieldsToUpdate).forEach(key =>
-            fieldsToUpdate[key] === undefined && delete fieldsToUpdate[key]
-        );
+        Object.keys(fieldsToUpdate).forEach((key) => {
+            if (fieldsToUpdate[key] === undefined) delete fieldsToUpdate[key];
+        });
 
         const user = await User.findByIdAndUpdate(
             req.params.id,
@@ -110,13 +116,13 @@ exports.updateUser = async (req, res, next) => {
         if (!user) {
             return res.status(404).json({
                 success: false,
-                message: 'User not found'
+                message: 'کاربر یافت نشد'
             });
         }
 
         res.status(200).json({
             success: true,
-            message: 'User updated successfully',
+            message: 'اطلاعات کاربر با موفقیت به‌روزرسانی شد',
             data: user
         });
     } catch (error) {
@@ -134,15 +140,15 @@ exports.deleteUser = async (req, res, next) => {
         if (!user) {
             return res.status(404).json({
                 success: false,
-                message: 'User not found'
+                message: 'کاربر پیدا نشد'
             });
         }
 
-        // Prevent deleting own account
-        if (user._id.toString() === req.user.id) {
+        // Prevent deleting admins
+        if (user.role === 'admin') {
             return res.status(400).json({
                 success: false,
-                message: 'You cannot delete your own account'
+                message: 'شما نمی توانید حساب یک مدیر را حذف کنید'
             });
         }
 
@@ -150,7 +156,7 @@ exports.deleteUser = async (req, res, next) => {
 
         res.status(200).json({
             success: true,
-            message: 'User deleted successfully'
+            message: 'کاربر با موفقیت حذف شد'
         });
     } catch (error) {
         next(error);
@@ -167,15 +173,15 @@ exports.toggleUserStatus = async (req, res, next) => {
         if (!user) {
             return res.status(404).json({
                 success: false,
-                message: 'User not found'
+                message: 'کاربر یافت نشد'
             });
         }
 
         // Prevent deactivating own account
-        if (user._id.toString() === req.user.id) {
+        if (user.role === 'admin') {
             return res.status(400).json({
                 success: false,
-                message: 'You cannot deactivate your own account'
+                message: 'شما نمی توانید وضعیت یک مدیر را تغییر دهید'
             });
         }
 
@@ -184,7 +190,7 @@ exports.toggleUserStatus = async (req, res, next) => {
 
         res.status(200).json({
             success: true,
-            message: `User ${user.isActive ? 'activated' : 'deactivated'} successfully`,
+            message: `وضعیت کاربر با موفقیت به ${user.isActive ? 'فعال' : 'غیرفعال'} تغییر یافت`,
             data: user
         });
     } catch (error) {
