@@ -36,9 +36,11 @@ app.use(express.urlencoded({ extended: true }));
 // Importing routes
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/categories', categoryRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

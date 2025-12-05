@@ -3,10 +3,10 @@ const mongoose = require('mongoose');
 const categorySchema = new mongoose.Schema({
     name: {
         type: String,
-        required: [true, 'Category name is required'],
+        required: [true, 'نام دسته‌بندی الزامی است'],
         unique: true,
         trim: true,
-        maxlength: [50, 'Category name cannot exceed 50 characters']
+        maxlength: [50, 'نام دسته‌بندی نمی‌تواند بیش از ۵۰ کاراکتر باشد']
     },
     slug: {
         type: String,
@@ -15,10 +15,11 @@ const categorySchema = new mongoose.Schema({
     },
     description: {
         type: String,
-        maxlength: [200, 'Description cannot exceed 200 characters']
+        maxlength: [200, 'توضیحات نمی‌تواند بیش از ۲۰۰ کاراکتر باشد']
     },
     icon: {
-        type: String
+        type: String,
+        default: ''
     },
     isActive: {
         type: Boolean,
@@ -31,8 +32,33 @@ const categorySchema = new mongoose.Schema({
 // Generate slug before saving
 categorySchema.pre('save', function (next) {
     if (this.isModified('name')) {
-        this.slug = this.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+        let slug = String(this.name).normalize('NFC').trim();
+        slug = slug.replace(/\u200c/g, '');
+        slug = slug.replace(/\s+/g, '-');
+        slug = slug.replace(/[^\p{L}\p{N}-]+/gu, '');
+        slug = slug.replace(/-+/g, '-');
+        slug = slug.replace(/^-+|-+$/g, '');
+        this.slug = slug.toLowerCase();
     }
+    next();
+});
+
+// Update slug before updating
+categorySchema.pre('findOneAndUpdate', function (next) {
+    const update = this.getUpdate();
+
+    if (update.name) {
+        let slug = String(update.name).normalize('NFC').trim();
+        slug = slug.replace(/\u200c/g, '');
+        slug = slug.replace(/\s+/g, '-');
+        slug = slug.replace(/[^\p{L}\p{N}-]+/gu, '');
+        slug = slug.replace(/-+/g, '-');
+        slug = slug.replace(/^-+|-+$/g, '');
+        update.slug = slug.toLowerCase();
+
+        this.setUpdate(update);
+    }
+
     next();
 });
 

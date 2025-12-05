@@ -4,27 +4,27 @@ const bcrypt = require('bcryptjs');
 const userSchema = new mongoose.Schema({
   firstName: {
     type: String,
-    required: [true, 'Please provide first name'],
+    required: [true, 'فیلد نام اجباری است'],
     trim: true,
-    maxlength: [50, 'First name cannot exceed 50 characters']
+    maxlength: [50, 'نام نمی‌تواند بیش از ۵۰ کاراکتر باشد']
   },
   lastName: {
     type: String,
-    required: [true, 'Please provide last name'],
+    required: [true, 'فیلد نام خانوادگی اجباری است'],
     trim: true,
-    maxlength: [50, 'Last name cannot exceed 50 characters']
+    maxlength: [50, 'نام خانوادگی نمی‌تواند بیش از ۵۰ کاراکتر باشد']
   },
   email: {
     type: String,
-    required: [true, 'Please provide email'],
+    required: [true, 'فیلد ایمیل اجباری است'],
     unique: true,
     lowercase: true,
-    match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email']
+    match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'لطفاً یک ایمیل معتبر وارد کنید']
   },
   password: {
     type: String,
-    required: [true, 'Please provide password'],
-    minlength: [6, 'Password must be at least 6 characters'],
+    required: [true, 'فیلد رمز عبور اجباری است'],
+    minlength: [6, 'رمز عبور باید حداقل ۶ کاراکتر باشد'],
     select: false
   },
   role: {
@@ -38,7 +38,7 @@ const userSchema = new mongoose.Schema({
   },
   bio: {
     type: String,
-    maxlength: [500, 'Bio cannot exceed 500 characters']
+    maxlength: [500, 'بیوگرافی نمی‌تواند بیش از ۵۰۰ کاراکتر باشد']
   },
   // For instructors
   expertise: [{
