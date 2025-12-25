@@ -37,10 +37,21 @@ app.use(express.urlencoded({ extended: true }));
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
+const courseRoutes = require('./routes/courseRoutes');
+const sectionRoutes = require('./routes/sectionRoutes');
+const sectionDetailsRoutes = require('./routes/sectionDetailsRoutes');
+const lessonRoutes = require('./routes/lessonRoutes');
+const lessonDetailsRoutes = require('./routes/lessonDetailsRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/courses', courseRoutes);
+
+app.use('/api/courses/:courseId/sections', sectionRoutes);
+app.use('/api/sections', sectionDetailsRoutes);
+app.use('/api/sections/:sectionId/lessons', lessonRoutes);
+app.use('/api/lessons', lessonDetailsRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

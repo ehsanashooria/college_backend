@@ -4,9 +4,9 @@ const mongoose = require('mongoose');
 const courseSchema = new mongoose.Schema({
     title: {
         type: String,
-        required: [true, 'Course title is required'],
+        required: [true, 'فیلد عنوان دوره اجباری است'],
         trim: true,
-        maxlength: [200, 'Title cannot exceed 200 characters']
+        maxlength: [200, 'عنوان نمی‌تواند بیش از ۲۰۰ کاراکتر باشد']
     },
     slug: {
         type: String,
@@ -15,12 +15,12 @@ const courseSchema = new mongoose.Schema({
     },
     description: {
         type: String,
-        required: [true, 'Course description is required'],
-        maxlength: [2000, 'Description cannot exceed 2000 characters']
+        required: [true, 'فیلد توضیحات دوره اجباری است'],
+        maxlength: [2000, 'توضیحات نمی‌تواند بیش از ۲۰۰۰ کاراکتر باشد']
     },
     shortDescription: {
         type: String,
-        maxlength: [300, 'Short description cannot exceed 300 characters']
+        maxlength: [300, 'توضیحات کوتاه نمی‌تواند بیش از ۳۰۰ کاراکتر باشد']
     },
     instructor: {
         type: mongoose.Schema.Types.ObjectId,
@@ -87,7 +87,6 @@ const courseSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    // Course Status
     status: {
         type: String,
         enum: ['draft', 'published', 'archived'],
@@ -105,7 +104,13 @@ const courseSchema = new mongoose.Schema({
 // Generate slug before saving
 courseSchema.pre('save', function (next) {
     if (this.isModified('title')) {
-        this.slug = this.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+        let slug = String(this.title).normalize('NFC').trim();
+        slug = slug.replace(/\u200c/g, '');
+        slug = slug.replace(/\s+/g, '-');
+        slug = slug.replace(/[^\p{L}\p{N}-]+/gu, '');
+        slug = slug.replace(/-+/g, '-');
+        slug = slug.replace(/^-+|-+$/g, '');
+        this.slug = slug.toLowerCase();
     }
     next();
 });
