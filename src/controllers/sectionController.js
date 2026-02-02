@@ -1,12 +1,10 @@
-const Section = require('../models/Section');
-const Course = require('../models/Course');
-const Lesson = require('../models/Lesson');
+const Section = require("../models/Section");
+const Course = require("../models/Course");
+const Lesson = require("../models/Lesson");
 
 // @desc    Get all sections for a course
 // @route   GET /api/courses/:courseId/sections
 // @access  Private (Enrolled/Instructor/Admin)
-
-// ⚠️⚠️⚠️⚠️ this api sends the unpublished sections as well - be aware !
 exports.getCourseSections = async (req, res, next) => {
   try {
     const course = await Course.findById(req.params.courseId);
@@ -14,27 +12,27 @@ exports.getCourseSections = async (req, res, next) => {
     if (!course) {
       return res.status(404).json({
         success: false,
-        message: 'دوره یافت نشد'
+        message: "دوره یافت نشد",
       });
     }
 
     // Check access: must be enrolled, instructor, or admin
     const isInstructor = course.instructor.toString() === req.user.id;
-    const isAdmin = req.user.role === 'admin';
+    const isAdmin = req.user.role === "admin";
 
     if (!isInstructor && !isAdmin) {
       // Check if student is enrolled
-      const Enrollment = require('../models/Enrollment');
+      const Enrollment = require("../models/Enrollment");
       const enrollment = await Enrollment.findOne({
         student: req.user.id,
         course: req.params.courseId,
-        paymentStatus: 'completed'
+        paymentStatus: "completed",
       });
 
       if (!enrollment) {
         return res.status(403).json({
           success: false,
-          message: 'برای دسترسی به بخش های این دوره باید ابتدا در آن شرکت کنید'
+          message: "برای دسترسی به بخش های این دوره باید ابتدا در آن شرکت کنید",
         });
       }
     }
@@ -42,14 +40,14 @@ exports.getCourseSections = async (req, res, next) => {
     const sections = await Section.find({ course: req.params.courseId })
       .sort({ order: 1 })
       .populate({
-        path: 'lessons',
-        options: { sort: { order: 1 } }
+        path: "lessons",
+        options: { sort: { order: 1 } },
       });
 
     res.status(200).json({
       success: true,
       count: sections.length,
-      data: sections
+      data: sections,
     });
   } catch (error) {
     next(error);
@@ -66,15 +64,18 @@ exports.createSection = async (req, res, next) => {
     if (!course) {
       return res.status(404).json({
         success: false,
-        message: 'دوره یافت نشد'
+        message: "دوره یافت نشد",
       });
     }
 
     // Check ownership
-    if (course.instructor.toString() !== req.user.id && req.user.role !== 'admin') {
+    if (
+      course.instructor.toString() !== req.user.id &&
+      req.user.role !== "admin"
+    ) {
       return res.status(403).json({
         success: false,
-        message: 'شما مجاز به اضافه کردن بخش به این دوره نیستید'
+        message: "شما مجاز به اضافه کردن بخش به این دوره نیستید",
       });
     }
 
@@ -83,8 +84,9 @@ exports.createSection = async (req, res, next) => {
     // If order not provided, set it to be last
     let sectionOrder = order;
     if (sectionOrder === undefined) {
-      const lastSection = await Section.findOne({ course: req.params.courseId })
-        .sort({ order: -1 });
+      const lastSection = await Section.findOne({
+        course: req.params.courseId,
+      }).sort({ order: -1 });
       sectionOrder = lastSection ? lastSection.order + 1 : 0;
     }
 
@@ -92,13 +94,13 @@ exports.createSection = async (req, res, next) => {
       course: req.params.courseId,
       title,
       description,
-      order: sectionOrder
+      order: sectionOrder,
     });
 
     res.status(201).json({
       success: true,
-      message: 'بخش با موفقیت ایجاد شد',
-      data: section
+      message: "بخش با موفقیت ایجاد شد",
+      data: section,
     });
   } catch (error) {
     next(error);
@@ -115,15 +117,18 @@ exports.reorderSections = async (req, res, next) => {
     if (!course) {
       return res.status(404).json({
         success: false,
-        message: 'دوره یافت نشد'
+        message: "دوره یافت نشد",
       });
     }
 
     // Check ownership
-    if (course.instructor.toString() !== req.user.id && req.user.role !== 'admin') {
+    if (
+      course.instructor.toString() !== req.user.id &&
+      req.user.role !== "admin"
+    ) {
       return res.status(403).json({
         success: false,
-        message: 'شما دسترسی به عوض کردن ترتیب بخش های این دوره ندارید'
+        message: "شما دسترسی به عوض کردن ترتیب بخش های این دوره ندارید",
       });
     }
 
@@ -132,24 +137,25 @@ exports.reorderSections = async (req, res, next) => {
     if (!Array.isArray(sections)) {
       return res.status(400).json({
         success: false,
-        message: 'فیلد بخش ها باید آرایه یا لیست باشد'
+        message: "فیلد بخش ها باید آرایه یا لیست باشد",
       });
     }
 
     // Update each section's order
-    const updatePromises = sections.map(item => 
+    const updatePromises = sections.map((item) =>
       Section.findByIdAndUpdate(item.id, { order: item.order })
     );
 
     await Promise.all(updatePromises);
 
-    const updatedSections = await Section.find({ course: req.params.courseId })
-      .sort({ order: 1 });
+    const updatedSections = await Section.find({
+      course: req.params.courseId,
+    }).sort({ order: 1 });
 
     res.status(200).json({
       success: true,
-      message: 'ترتیب بخش ها با موفقیت تغییر یافت',
-      data: updatedSections
+      message: "ترتیب بخش ها با موفقیت تغییر یافت",
+      data: updatedSections,
     });
   } catch (error) {
     next(error);
@@ -161,16 +167,14 @@ exports.reorderSections = async (req, res, next) => {
 // @access  Private (Enrolled/Instructor/Admin)
 exports.getSectionById = async (req, res, next) => {
   try {
-    const section = await Section.findById(req.params.id)
-      .populate({
-        path: 'lessons',
-        options: { sort: { order: 1 } }
-      });
-
+    const section = await Section.findById(req.params.id).populate({
+      path: "lessons",
+      options: { sort: { order: 1 } },
+    });
     if (!section) {
       return res.status(404).json({
         success: false,
-        message: 'Section not found'
+        message: "بخش یافت نشد",
       });
     }
 
@@ -178,27 +182,28 @@ exports.getSectionById = async (req, res, next) => {
 
     // Check access
     const isInstructor = course.instructor.toString() === req.user.id;
-    const isAdmin = req.user.role === 'admin';
+    const isAdmin = req.user.role === "admin";
 
     if (!isInstructor && !isAdmin) {
-      const Enrollment = require('../models/Enrollment');
+      const Enrollment = require("../models/Enrollment");
       const enrollment = await Enrollment.findOne({
         student: req.user.id,
         course: section.course,
-        paymentStatus: 'completed'
+        paymentStatus: "completed",
       });
 
       if (!enrollment) {
         return res.status(403).json({
           success: false,
-          message: 'You must be enrolled in this course to access this section'
+          message:
+            "شما باید در این دوره شرکت کرده باشید تا بتوانید به این بخش دسترسی پیدا کنید",
         });
       }
     }
 
     res.status(200).json({
       success: true,
-      data: section
+      data: section,
     });
   } catch (error) {
     next(error);
@@ -215,33 +220,41 @@ exports.updateSection = async (req, res, next) => {
     if (!section) {
       return res.status(404).json({
         success: false,
-        message: 'Section not found'
+        message: "بخش یافت نشد",
       });
     }
 
     const course = await Course.findById(section.course);
 
     // Check ownership
-    if (course.instructor.toString() !== req.user.id && req.user.role !== 'admin') {
+    if (
+      course.instructor.toString() !== req.user.id &&
+      req.user.role !== "admin"
+    ) {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to update this section'
+        message: "شما مجاز به ویرایش این بخش نیستید",
       });
     }
 
     section = await Section.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      // we don't update order here
+      {
+        title: req.body.title,
+        description: req.body.description,
+        isPublished: req.body.isPublished,
+      },
       {
         new: true,
-        runValidators: true
+        runValidators: true,
       }
     );
 
     res.status(200).json({
       success: true,
-      message: 'Section updated successfully',
-      data: section
+      message: "بخش با موفقیت به روز شد",
+      data: section,
     });
   } catch (error) {
     next(error);
@@ -258,27 +271,30 @@ exports.deleteSection = async (req, res, next) => {
     if (!section) {
       return res.status(404).json({
         success: false,
-        message: 'Section not found'
+        message: "بخش یافت نشد",
       });
     }
 
     const course = await Course.findById(section.course);
 
     // Check ownership
-    if (course.instructor.toString() !== req.user.id && req.user.role !== 'admin') {
+    if (
+      course.instructor.toString() !== req.user.id &&
+      req.user.role !== "admin"
+    ) {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to delete this section'
+        message: "دسترسی به حذف این بخش ندارید",
       });
     }
 
-    // Check if section has lessons
+    // Check if section has lessons (optional, remove it later if not needed)
     const lessonCount = await Lesson.countDocuments({ section: section._id });
 
     if (lessonCount > 0) {
       return res.status(400).json({
         success: false,
-        message: `Cannot delete section. It has ${lessonCount} lesson(s). Please delete or move those lessons first.`
+        message: `لطفا ابتدا تمام دروس این بخش (${lessonCount}) را حذف کنید سپس دوباره تلاش کنید`,
       });
     }
 
@@ -286,10 +302,9 @@ exports.deleteSection = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'Section deleted successfully'
+      message: "بخش با موفقیت حذف شد",
     });
   } catch (error) {
     next(error);
   }
 };
-

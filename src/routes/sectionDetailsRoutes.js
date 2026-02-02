@@ -14,11 +14,11 @@ const updateSectionValidation = [
   body('title')
     .optional()
     .trim()
-    .notEmpty().withMessage('Title cannot be empty')
-    .isLength({ max: 200 }).withMessage('Title cannot exceed 200 characters'),
+    .notEmpty().withMessage('عنوان نمی تواند خالی باشد')
+    .isLength({ max: 200 }).withMessage('عنوان نمی تواند بیشتر از 200 کاراکتر باشد'),
   body('description')
     .optional()
-    .isLength({ max: 500 }).withMessage('Description cannot exceed 500 characters')
+    .isLength({ max: 500 }).withMessage('توضیحات نمی تواند بیشتر از 500 کاراکتر باشد')
 ];
 
 router.get('/:id', protect, getSectionById);

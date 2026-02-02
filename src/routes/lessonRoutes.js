@@ -1,37 +1,55 @@
-const express = require('express');
-const { body } = require('express-validator');
+const express = require("express");
+const { body } = require("express-validator");
 const {
   getSectionLessons,
   createLesson,
-  reorderLessons
-} = require('../controllers/lessonController');
-const { protect } = require('../middleware/auth');
-const validateRequest = require('../middleware/validateRequest');
+  reorderLessons,
+} = require("../controllers/lessonController");
+const { protect } = require("../middleware/auth");
+const validateRequest = require("../middleware/validateRequest");
 
 const router = express.Router({ mergeParams: true });
 
 // Validation
 const lessonValidation = [
-  body('title')
+  body("title")
     .trim()
-    .notEmpty().withMessage('Lesson title is required')
-    .isLength({ max: 200 }).withMessage('Title cannot exceed 200 characters'),
-  body('description')
+    .notEmpty()
+    .withMessage("عنوان درس اجباری است")
+    .isLength({ max: 200 })
+    .withMessage("عنوان نمی تواند از 200 کاراکتر بیشتر باشد"),
+
+  body("description")
     .optional()
-    .isLength({ max: 1000 }).withMessage('Description cannot exceed 1000 characters'),
-  body('type')
+    .isLength({ max: 1000 })
+    .withMessage("توضیحات نمی تواند از 1000 کاراکتر بیشتر باشد"),
+
+  body("type")
+    .isIn(["video", "article", "quiz", "assignment"])
+    .withMessage("نوع درس نامعتبر است"),
+
+  body("videoDuration")
     .optional()
-    .isIn(['video', 'article', 'quiz', 'assignment']).withMessage('Invalid lesson type'),
-  body('videoDuration')
+    .isInt({ min: 1 })
+    .withMessage("مدت ویدئو باید یک عدد غیر منفی باشد"),
+
+  body("isFree")
     .optional()
-    .isInt({ min: 0 }).withMessage('Video duration must be a non-negative integer'),
-  body('isFree')
+    .isBoolean()
+    .withMessage("فیلد isFree باید بولین باشد"),
+
+  body("attachments")
     .optional()
-    .isBoolean().withMessage('isFree must be a boolean')
+    .isArray()
+    .withMessage("attachments باید آرایه باشد"),
+
+  body("attachments.*")
+    .isObject()
+    .withMessage("هر آیتم attachments باید یک object باشد"),
 ];
 
-router.get('/', protect, getSectionLessons);
-router.post('/', protect, lessonValidation, validateRequest, createLesson);
-router.put('/reorder', protect, reorderLessons);
+router.get("/", protect, getSectionLessons);
+router.post("/", protect, lessonValidation, validateRequest, createLesson);
+router.put("/reorder", protect, reorderLessons);
 
 module.exports = router;
