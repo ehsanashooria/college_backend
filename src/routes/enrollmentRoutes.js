@@ -6,7 +6,7 @@ const {
   testPayment,
   getMyEnrollments,
   getEnrollmentById,
-  checkEnrollment,
+  // checkEnrollment,
   getAllEnrollments,
   processRefund,
 } = require("../controllers/enrollmentController");
@@ -41,7 +41,7 @@ router.post("/test-payment/:authority", testPayment);
 router.get("/verify", verifyEnrollment);
 
 router.get("/mycourses", protect, getMyEnrollments);
-router.get("/course/:courseId/check", protect, checkEnrollment);
+// router.get("/course/:courseId/check", protect, checkEnrollment);
 router.get("/:id", protect, getEnrollmentById);
 
 // Admin routes

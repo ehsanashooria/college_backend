@@ -90,6 +90,7 @@ exports.initiateEnrollment = async (req, res, next) => {
       });
     }
 
+    // Payment gateway redirects user here (verify payment)
     const callbackUrl = `${process.env.BACKEND_URL}/api/enrollments/verify`;
 
     const paymentResult = await paymentGateway.requestPayment({
@@ -108,7 +109,7 @@ exports.initiateEnrollment = async (req, res, next) => {
       });
     }
 
-    // Create pending enrollment
+    // Create pending enrollment if request payment was successful
     const enrollment = await Enrollment.create({
       student: req.user.id,
       course: courseId,
@@ -125,7 +126,7 @@ exports.initiateEnrollment = async (req, res, next) => {
         enrollment,
         payment: {
           authority: paymentResult.authority,
-          testPaymentUrl: paymentResult.testPaymentUrl, // For testing
+          testPaymentUrl: paymentResult.testPaymentUrl, // For testing (it's in frontend now)
           amount: finalPrice,
         },
       },
@@ -144,7 +145,7 @@ exports.testPayment = async (req, res, next) => {
     if (process.env.NODE_ENV === "production") {
       return res.status(403).json({
         success: false,
-        message: "پرداخت های تستی در این مود مجاز نیستند",
+        message: "پرداخت های تستی در حال حاضر مجاز نیستند",
       });
     }
 
@@ -166,7 +167,7 @@ exports.testPayment = async (req, res, next) => {
       data: {
         authority: result.authority,
         refId: result.refId,
-        // This can use callback url from payment gateway - but we put it here hardcoded
+        // This can use callback url from payment gateway - but we put it here hardcoded for testing
         verifyUrl: `/api/enrollments/verify?Authority=${authority}&Status=OK`,
       },
     });
@@ -249,16 +250,6 @@ exports.getMyEnrollments = async (req, res, next) => {
     // Filter
     const filter = { student: req.user.id };
 
-    // Status filter
-    if (req.query.paymentStatus) {
-      filter.paymentStatus = req.query.paymentStatus;
-    }
-
-    // Completed filter
-    if (req.query.isCompleted !== undefined) {
-      filter.isCompleted = req.query.isCompleted === "true";
-    }
-
     // Pagination
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -313,7 +304,7 @@ exports.getEnrollmentById = async (req, res, next) => {
     if (!enrollment) {
       return res.status(404).json({
         success: false,
-        message: "Enrollment not found",
+        message: "رکورد یافت نشد",
       });
     }
 
@@ -326,7 +317,7 @@ exports.getEnrollmentById = async (req, res, next) => {
     if (!isStudent && !isInstructor && !isAdmin) {
       return res.status(403).json({
         success: false,
-        message: "Not authorized to view this enrollment",
+        message: "شما دسترسی به مشاهده این دوره ندارید",
       });
     }
 
@@ -342,30 +333,30 @@ exports.getEnrollmentById = async (req, res, next) => {
 // @desc    Check if user is enrolled in a course
 // @route   GET /api/enrollments/course/:courseId/check
 // @access  Private
-exports.checkEnrollment = async (req, res, next) => {
-  try {
-    const enrollment = await Enrollment.findOne({
-      student: req.user.id,
-      course: req.params.courseId,
-    });
+// exports.checkEnrollment = async (req, res, next) => {
+//   try {
+//     const enrollment = await Enrollment.findOne({
+//       student: req.user.id,
+//       course: req.params.courseId,
+//     });
 
-    if (!enrollment) {
-      return res.status(200).json({
-        success: true,
-        isEnrolled: false,
-        enrollment: null,
-      });
-    }
+//     if (!enrollment) {
+//       return res.status(200).json({
+//         success: true,
+//         isEnrolled: false,
+//         enrollment: null,
+//       });
+//     }
 
-    res.status(200).json({
-      success: true,
-      isEnrolled: enrollment.paymentStatus === "completed",
-      enrollment,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+//     res.status(200).json({
+//       success: true,
+//       isEnrolled: enrollment.paymentStatus === "completed",
+//       enrollment,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 // @desc    Get all enrollments (Admin only)
 // @route   GET /api/enrollments
@@ -401,22 +392,12 @@ exports.getAllEnrollments = async (req, res, next) => {
 
     const total = await Enrollment.countDocuments(filter);
 
-    // Calculate total revenue
-    const completedEnrollments = await Enrollment.find({
-      paymentStatus: "completed",
-    });
-    const totalRevenue = completedEnrollments.reduce(
-      (sum, e) => sum + e.paymentAmount,
-      0,
-    );
-
     res.status(200).json({
       success: true,
       count: enrollments.length,
       total,
       page,
       pages: Math.ceil(total / limit),
-      totalRevenue,
       data: enrollments,
     });
   } catch (error) {
@@ -434,14 +415,14 @@ exports.processRefund = async (req, res, next) => {
     if (!enrollment) {
       return res.status(404).json({
         success: false,
-        message: "Enrollment not found",
+        message: "رکورد یافت نشد",
       });
     }
 
     if (enrollment.paymentStatus !== "completed") {
       return res.status(400).json({
         success: false,
-        message: "Only completed enrollments can be refunded",
+        message: "فقط دوره هایی که پرداخت کامل شده اند می توانند استرداد شوند",
       });
     }
 
@@ -456,7 +437,7 @@ exports.processRefund = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: "Refund processed successfully",
+      message: "عملیات استرداد با موفقیت انجام شد",
       data: enrollment,
     });
   } catch (error) {

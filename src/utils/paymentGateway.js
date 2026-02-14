@@ -155,7 +155,7 @@ class PaymentGateway {
       success: true,
       authority,
       refId,
-      
+      message: "پرداخت شبیه سازی شده با موفقیت انجام شد",
     };
   }
 

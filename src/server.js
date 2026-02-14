@@ -45,18 +45,24 @@ const sectionDetailsRoutes = require("./routes/sectionDetailsRoutes");
 const lessonRoutes = require("./routes/lessonRoutes");
 const lessonDetailsRoutes = require("./routes/lessonDetailsRoutes");
 const enrollmentRoutes = require('./routes/enrollmentRoutes');
+const progressRoutes = require('./routes/progressRoutes');
+const questionRoutes = require('./routes/questionRoutes');
+const answerRoutes = require('./routes/answerRoutes');
+
+
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/courses", courseRoutes);
-
 app.use("/api/courses/:courseId/sections", sectionRoutes);
 app.use("/api/sections", sectionDetailsRoutes);
 app.use("/api/sections/:sectionId/lessons", lessonRoutes);
 app.use("/api/lessons", lessonDetailsRoutes);
-
 app.use('/api/enrollments', enrollmentRoutes);
+app.use('/api/progress', progressRoutes);
+app.use('/api/questions', questionRoutes);
+app.use('/api/answers', answerRoutes);
 
 // Health check
 app.get("/health", (req, res) => {

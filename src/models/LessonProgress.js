@@ -1,44 +1,39 @@
 const mongoose = require('mongoose');
 
 const lessonProgressSchema = new mongoose.Schema({
-    student: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-    },
-    lesson: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Lesson',
-        required: true
-    },
-    course: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Course',
-        required: true
-    },
-    enrollment: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Enrollment',
-        required: true
-    },
-    // Progress tracking
-    watchedDuration: {
-        type: Number, // in seconds
-        default: 0
-    },
-    isCompleted: {
-        type: Boolean,
-        default: false
-    },
-    completedAt: {
-        type: Date
-    },
-    lastWatchedAt: {
-        type: Date,
-        default: Date.now
-    }
+  student: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  lesson: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Lesson',
+    required: true
+  },
+  course: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Course',
+    required: true
+  },
+  watchedDuration: {
+    type: Number, // in seconds
+    default: 0
+  },
+  isCompleted: {
+    type: Boolean,
+    default: false
+  },
+  completedAt: {
+    type: Date,
+    default: null
+  },
+  lastWatchedAt: {
+    type: Date,
+    default: Date.now
+  }
 }, {
-    timestamps: true
+  timestamps: true
 });
 
 // Compound index

@@ -13,8 +13,8 @@ const answerSchema = new mongoose.Schema({
     },
     content: {
         type: String,
-        required: [true, 'Answer content is required'],
-        maxlength: [2000, 'Content cannot exceed 2000 characters']
+        required: [true, 'محتوای پاسخ نمی تواند خالی باشد'],
+        maxlength: [2000, 'پاسخ نمی تواند بیشتر از 2000 کاراکتر باشد']
     },
     isInstructorAnswer: {
         type: Boolean,
@@ -24,15 +24,6 @@ const answerSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    // Engagement
-    upvotes: {
-        type: Number,
-        default: 0
-    },
-    upvotedBy: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-    }]
 }, {
     timestamps: true
 });

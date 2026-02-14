@@ -18,14 +18,14 @@ const questionSchema = new mongoose.Schema({
     },
     title: {
         type: String,
-        required: [true, 'Question title is required'],
+        required: [true, 'عنوان سوال الزامی است'],
         trim: true,
-        maxlength: [200, 'Title cannot exceed 200 characters']
+        maxlength: [200, 'عنوان سوال نمی تواند بیشتر از 200 کاراکتر باشد']
     },
     content: {
         type: String,
-        required: [true, 'Question content is required'],
-        maxlength: [2000, 'Content cannot exceed 2000 characters']
+        required: [true, 'محتوای سوال الزامی است'],
+        maxlength: [2000, 'محتوای سوال نمی تواند بیشتر از 2000 کاراکتر باشد']
     },
     // Question status
     isAnswered: {

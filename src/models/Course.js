@@ -83,16 +83,16 @@ const courseSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    averageRating: {
-      type: Number,
-      min: 0,
-      max: 5,
-      default: 0,
-    },
-    totalReviews: {
-      type: Number,
-      default: 0,
-    },
+    // averageRating: {
+    //   type: Number,
+    //   min: 0,
+    //   max: 5,
+    //   default: 0,
+    // },
+    // totalReviews: {
+    //   type: Number,
+    //   default: 0,
+    // },
     status: {
       type: String,
       enum: ["draft", "published", "archived"],
