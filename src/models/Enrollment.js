@@ -18,6 +18,10 @@ const enrollmentSchema = new mongoose.Schema(
       enum: ["pending", "completed", "failed", "refunded"],
       default: "pending",
     },
+    paymentMethod: {
+      type: String,
+      required: true,
+    },
     paymentAmount: {
       type: Number,
       required: true,
@@ -63,7 +67,7 @@ const enrollmentSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Compound index to ensure one enrollment per student per course

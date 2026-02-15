@@ -10,6 +10,7 @@ const {
   getAllEnrollments,
   processRefund,
 } = require("../controllers/enrollmentController");
+
 const { protect, authorize } = require("../middleware/auth");
 const validateRequest = require("../middleware/validateRequest");
 
@@ -19,16 +20,10 @@ const router = express.Router();
 const enrollmentValidation = [
   body("courseId")
     .notEmpty()
-    .withMessage("Course ID is required")
+    .withMessage("شناسه دوره اجباری است")
     .isMongoId()
-    .withMessage("Invalid course ID"),
+    .withMessage("شناسه دوره معتبر نیست"),
 ];
-
-// Public route - payment gateway callback
-router.get("/verify", verifyEnrollment);
-
-// Testing route (development only)
-router.post("/test-payment/:authority", testPayment);
 
 // Protected routes
 router.post(
@@ -36,8 +31,15 @@ router.post(
   protect,
   enrollmentValidation,
   validateRequest,
-  initiateEnrollment
+  initiateEnrollment,
 );
+
+// Testing route (development only)
+router.post("/test-payment/:authority", testPayment);
+
+// Public route - payment gateway callback
+router.get("/verify", verifyEnrollment);
+
 router.get("/mycourses", protect, getMyEnrollments);
 router.get("/course/:courseId/check", protect, checkEnrollment);
 router.get("/:id", protect, getEnrollmentById);

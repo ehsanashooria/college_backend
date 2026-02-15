@@ -14,27 +14,27 @@ exports.initiateEnrollment = async (req, res, next) => {
     if (req.user.role !== "student") {
       return res.status(403).json({
         success: false,
-        message: "Only students can enroll in courses",
+        message: "فقط دانش آموز ها می توانند در دوره ها ثبت نام کنند",
       });
     }
 
     // Check if course exists and is published
     const course = await Course.findById(courseId).populate(
       "instructor",
-      "firstName lastName"
+      "firstName lastName",
     );
 
     if (!course) {
       return res.status(404).json({
         success: false,
-        message: "Course not found",
+        message: "دوره یافت نشد",
       });
     }
 
-    if (!course.isPublished) {
+    if (!course.status !== "published") {
       return res.status(400).json({
         success: false,
-        message: "This course is not available for enrollment",
+        message: "در حال حاضر شرکت در این دوره مجاز نیست",
       });
     }
 
@@ -48,12 +48,12 @@ exports.initiateEnrollment = async (req, res, next) => {
       if (existingEnrollment.paymentStatus === "completed") {
         return res.status(400).json({
           success: false,
-          message: "You are already enrolled in this course",
+          message: "شما در این دوره شرکت کرده اید",
         });
       } else if (existingEnrollment.paymentStatus === "pending") {
         return res.status(400).json({
           success: false,
-          message: "You have a pending payment for this course",
+          message: "شما یک پرداخت در حال انتظار برای این دوره دارید",
           enrollment: existingEnrollment,
         });
       }
@@ -70,7 +70,8 @@ exports.initiateEnrollment = async (req, res, next) => {
         paymentStatus: "completed",
         paymentAmount: 0,
         paymentMethod: "free",
-        transactionId: "FREE_" + Date.now(),
+        paymentAuthority: "FREE_AUTH" + Date.now(),
+        paymentRefId: "FREE_REF" + Date.now(),
       });
 
       // Update course enrollment count
@@ -84,12 +85,11 @@ exports.initiateEnrollment = async (req, res, next) => {
 
       return res.status(201).json({
         success: true,
-        message: "Successfully enrolled in free course",
+        message: "شما با موفقیت در دوره رایگان ثبت نام کردید",
         data: enrollment,
       });
     }
 
-    // Request payment from gateway
     const callbackUrl = `${process.env.BACKEND_URL}/api/enrollments/verify`;
 
     const paymentResult = await paymentGateway.requestPayment({
@@ -103,7 +103,7 @@ exports.initiateEnrollment = async (req, res, next) => {
     if (!paymentResult.success) {
       return res.status(400).json({
         success: false,
-        message: "Failed to initiate payment",
+        message: "درخواست پرداخت ناموفق بود",
         error: paymentResult.message,
       });
     }
@@ -115,17 +115,16 @@ exports.initiateEnrollment = async (req, res, next) => {
       paymentStatus: "pending",
       paymentAmount: finalPrice,
       paymentMethod: "zarinpal",
-      transactionId: paymentResult.authority,
+      paymentAuthority: paymentResult.authority,
     });
 
     res.status(201).json({
       success: true,
-      message: "Payment initiated. Redirect user to payment gateway.",
+      message: "درخواست پرداخت ثبت شد. کاربر را به درگاه پرداخت هدایت کنید",
       data: {
         enrollment,
         payment: {
           authority: paymentResult.authority,
-          paymentUrl: paymentResult.paymentUrl,
           testPaymentUrl: paymentResult.testPaymentUrl, // For testing
           amount: finalPrice,
         },
@@ -133,72 +132,6 @@ exports.initiateEnrollment = async (req, res, next) => {
     });
   } catch (error) {
     next(error);
-  }
-};
-
-// @desc    Verify payment and complete enrollment
-// @route   GET /api/enrollments/verify
-// @access  Public (callback from payment gateway)
-exports.verifyEnrollment = async (req, res, next) => {
-  try {
-    const { Authority, Status } = req.query;
-
-    // Check if payment was successful (Status = 'OK' from ZarinPal)
-    if (Status !== "OK") {
-      return res.redirect(
-        `${process.env.FRONTEND_URL}/payment/failed?reason=cancelled`
-      );
-    }
-
-    // Find enrollment by authority (transaction ID)
-    const enrollment = await Enrollment.findOne({
-      transactionId: Authority,
-      paymentStatus: "pending",
-    }).populate("course", "title instructor totalEnrollments");
-
-    if (!enrollment) {
-      return res.redirect(
-        `${process.env.FRONTEND_URL}/payment/failed?reason=not_found`
-      );
-    }
-
-    // Verify payment with gateway
-    const verifyResult = await paymentGateway.verifyPayment(
-      Authority,
-      enrollment.paymentAmount
-    );
-
-    if (!verifyResult.success) {
-      enrollment.paymentStatus = "failed";
-      await enrollment.save();
-
-      return res.redirect(
-        `${process.env.FRONTEND_URL}/payment/failed?reason=verification_failed`
-      );
-    }
-
-    // Update enrollment status
-    enrollment.paymentStatus = "completed";
-    enrollment.transactionId = verifyResult.refId;
-    await enrollment.save();
-
-    // Update course stats
-    const course = await Course.findById(enrollment.course._id);
-    course.totalEnrollments += 1;
-    await course.save();
-
-    // Update instructor stats
-    await User.findByIdAndUpdate(course.instructor, {
-      $inc: { totalStudentsEnrolled: 1 },
-    });
-
-    // Redirect to success page
-    res.redirect(
-      `${process.env.FRONTEND_URL}/payment/success?enrollmentId=${enrollment._id}`
-    );
-  } catch (error) {
-    console.error("Payment verification error:", error);
-    res.redirect(`${process.env.FRONTEND_URL}/payment/failed?reason=error`);
   }
 };
 
@@ -211,7 +144,7 @@ exports.testPayment = async (req, res, next) => {
     if (process.env.NODE_ENV === "production") {
       return res.status(403).json({
         success: false,
-        message: "Test payments are not allowed in production",
+        message: "پرداخت های تستی در این مود مجاز نیستند",
       });
     }
 
@@ -229,15 +162,82 @@ exports.testPayment = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: "Payment simulated successfully. Now call verify endpoint.",
+      message: "پرداخت با موفقیت شبیه سازی شد. کاربر را به صفحه تایید هدایت کنید",
       data: {
         authority: result.authority,
         refId: result.refId,
+        // This can use callback url from payment gateway - but we put it here hardcoded
         verifyUrl: `/api/enrollments/verify?Authority=${authority}&Status=OK`,
       },
     });
   } catch (error) {
     next(error);
+  }
+};
+
+// @desc    Verify payment and complete enrollment
+// @route   GET /api/enrollments/verify
+// @access  Public (callback from payment gateway)
+exports.verifyEnrollment = async (req, res, next) => {
+  try {
+    const { Authority, Status } = req.query;
+
+    // Check if payment was successful (Status = 'OK' from ZarinPal)
+    if (Status !== "OK") {
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/payment/failed?reason=cancelled`,
+      );
+    }
+
+    // Find enrollment by authority (transaction ID)
+    const enrollment = await Enrollment.findOne({
+      paymentAuthority: Authority,
+      paymentStatus: "pending",
+    }).populate("course", "title instructor totalEnrollments");
+
+    if (!enrollment) {
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/payment/failed?reason=not_found`,
+      );
+    }
+
+    // Verify payment with gateway
+    const verifyResult = await paymentGateway.verifyPayment(
+      Authority,
+      enrollment.paymentAmount,
+    );
+
+    if (!verifyResult.success) {
+      enrollment.paymentStatus = "failed";
+      await enrollment.save();
+
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/payment/failed?reason=verification_failed`,
+      );
+    }
+
+    // Update enrollment status
+    enrollment.paymentStatus = "completed";
+    enrollment.paymentRefId = verifyResult.refId;
+    await enrollment.save();
+
+    // Update course stats
+    const course = await Course.findById(enrollment.course._id);
+    course.totalEnrollments += 1;
+    await course.save();
+
+    // Update instructor stats
+    await User.findByIdAndUpdate(course.instructor, {
+      $inc: { totalStudentsEnrolled: 1 },
+    });
+
+    // Redirect to success page
+    res.redirect(
+      `${process.env.FRONTEND_URL}/payment/success?enrollmentId=${enrollment._id}`,
+    );
+  } catch (error) {
+    console.error("Payment verification error:", error);
+    res.redirect(`${process.env.FRONTEND_URL}/payment/failed?reason=error`);
   }
 };
 
@@ -407,7 +407,7 @@ exports.getAllEnrollments = async (req, res, next) => {
     });
     const totalRevenue = completedEnrollments.reduce(
       (sum, e) => sum + e.paymentAmount,
-      0
+      0,
     );
 
     res.status(200).json({

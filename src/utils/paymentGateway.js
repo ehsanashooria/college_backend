@@ -18,7 +18,7 @@ class PaymentGateway {
     try {
       // Validate amount (must be at least 1000 Tomans in real ZarinPal)
       if (amount < 1000) {
-        throw new Error("Amount must be at least 1000 Tomans");
+        throw new Error("مقدار پرداخت نمی تواند زیر 1000 تومان باشد");
       }
 
       // SIMULATION: Generate fake authority code
@@ -58,14 +58,14 @@ class PaymentGateway {
       return {
         success: true,
         authority,
-        paymentUrl: `${this.baseUrl}/pg/StartPay/${authority}`,
+        // paymentUrl: `${this.baseUrl}/pg/StartPay/${authority}`,
         // For testing: add test payment link
         testPaymentUrl: `${process.env.FRONTEND_URL}/payment/test?authority=${authority}`,
       };
     } catch (error) {
       return {
         success: false,
-        message: error.message || "Payment request failed",
+        message: error.message || "درخواست پرداخت ناموفق",
       };
     }
   }
@@ -84,7 +84,7 @@ class PaymentGateway {
       if (!payment) {
         return {
           success: false,
-          message: "Payment not found",
+          message: "رکورد پرداخت یافت نشد",
         };
       }
 
@@ -92,7 +92,7 @@ class PaymentGateway {
       if (payment.amount !== amount) {
         return {
           success: false,
-          message: "Amount mismatch",
+          message: "مقدار پرداخت نامعتبر است",
         };
       }
 
@@ -125,12 +125,12 @@ class PaymentGateway {
       return {
         success: true,
         refId,
-        message: "Payment verified successfully",
+        message: "پرداخت معتبر است",
       };
     } catch (error) {
       return {
         success: false,
-        message: error.message || "Payment verification failed",
+        message: error.message || "پرداخت نامعتبر است",
       };
     }
   }
@@ -143,7 +143,7 @@ class PaymentGateway {
     const payment = this.pendingPayments.get(authority);
 
     if (!payment) {
-      return { success: false, message: "Payment not found" };
+      return { success: false, message: "رکورد پرداخت یافت نشد" };
     }
 
     const refId = this.generateRefId();
@@ -155,6 +155,7 @@ class PaymentGateway {
       success: true,
       authority,
       refId,
+      
     };
   }
 
