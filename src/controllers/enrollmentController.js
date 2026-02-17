@@ -31,7 +31,7 @@ exports.initiateEnrollment = async (req, res, next) => {
       });
     }
 
-    if (!course.status !== "published") {
+    if (course.status !== "published") {
       return res.status(400).json({
         success: false,
         message: "در حال حاضر شرکت در این دوره مجاز نیست",
@@ -259,7 +259,7 @@ exports.getMyEnrollments = async (req, res, next) => {
       .populate({
         path: "course",
         select:
-          "title slug thumbnail instructor totalDuration totalLessons averageRating",
+          "title slug thumbnail instructor totalDuration totalLessons",
         populate: {
           path: "instructor",
           select: "firstName lastName avatar",
@@ -333,30 +333,30 @@ exports.getEnrollmentById = async (req, res, next) => {
 // @desc    Check if user is enrolled in a course
 // @route   GET /api/enrollments/course/:courseId/check
 // @access  Private
-// exports.checkEnrollment = async (req, res, next) => {
-//   try {
-//     const enrollment = await Enrollment.findOne({
-//       student: req.user.id,
-//       course: req.params.courseId,
-//     });
+exports.checkEnrollment = async (req, res, next) => {
+  try {
+    const enrollment = await Enrollment.findOne({
+      student: req.user.id,
+      course: req.params.courseId,
+    });
 
-//     if (!enrollment) {
-//       return res.status(200).json({
-//         success: true,
-//         isEnrolled: false,
-//         enrollment: null,
-//       });
-//     }
+    if (!enrollment) {
+      return res.status(200).json({
+        success: true,
+        isEnrolled: false,
+        enrollment: null,
+      });
+    }
 
-//     res.status(200).json({
-//       success: true,
-//       isEnrolled: enrollment.paymentStatus === "completed",
-//       enrollment,
-//     });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
+    res.status(200).json({
+      success: true,
+      isEnrolled: enrollment.paymentStatus === "completed",
+      enrollment,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 // @desc    Get all enrollments (Admin only)
 // @route   GET /api/enrollments
@@ -399,46 +399,6 @@ exports.getAllEnrollments = async (req, res, next) => {
       page,
       pages: Math.ceil(total / limit),
       data: enrollments,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// @desc    Process refund (Admin only)
-// @route   PUT /api/enrollments/:id/refund
-// @access  Private/Admin
-exports.processRefund = async (req, res, next) => {
-  try {
-    const enrollment = await Enrollment.findById(req.params.id);
-
-    if (!enrollment) {
-      return res.status(404).json({
-        success: false,
-        message: "رکورد یافت نشد",
-      });
-    }
-
-    if (enrollment.paymentStatus !== "completed") {
-      return res.status(400).json({
-        success: false,
-        message: "فقط دوره هایی که پرداخت کامل شده اند می توانند استرداد شوند",
-      });
-    }
-
-    // Update enrollment
-    enrollment.paymentStatus = "refunded";
-    await enrollment.save();
-
-    // Update course stats
-    await Course.findByIdAndUpdate(enrollment.course, {
-      $inc: { totalEnrollments: -1 },
-    });
-
-    res.status(200).json({
-      success: true,
-      message: "عملیات استرداد با موفقیت انجام شد",
-      data: enrollment,
     });
   } catch (error) {
     next(error);

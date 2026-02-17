@@ -6,9 +6,8 @@ const {
   testPayment,
   getMyEnrollments,
   getEnrollmentById,
-  // checkEnrollment,
+  checkEnrollment,
   getAllEnrollments,
-  processRefund,
 } = require("../controllers/enrollmentController");
 
 const { protect, authorize } = require("../middleware/auth");
@@ -41,11 +40,10 @@ router.post("/test-payment/:authority", testPayment);
 router.get("/verify", verifyEnrollment);
 
 router.get("/mycourses", protect, getMyEnrollments);
-// router.get("/course/:courseId/check", protect, checkEnrollment);
+router.get("/course/:courseId/check", protect, checkEnrollment);
 router.get("/:id", protect, getEnrollmentById);
 
 // Admin routes
 router.get("/", protect, authorize("admin"), getAllEnrollments);
-router.put("/:id/refund", protect, authorize("admin"), processRefund);
 
 module.exports = router;

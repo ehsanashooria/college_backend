@@ -15,7 +15,7 @@ const enrollmentSchema = new mongoose.Schema(
     // Payment information
     paymentStatus: {
       type: String,
-      enum: ["pending", "completed", "failed", "refunded"],
+      enum: ["pending", "completed", "failed"],
       default: "pending",
     },
     paymentMethod: {
@@ -36,13 +36,6 @@ const enrollmentSchema = new mongoose.Schema(
     },
     paidAt: {
       type: Date,
-    },
-    // Progress tracking
-    progress: {
-      type: Number,
-      min: 0,
-      max: 100,
-      default: 0,
     },
     completedLessons: [
       {

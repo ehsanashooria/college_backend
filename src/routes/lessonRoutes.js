@@ -30,7 +30,7 @@ const lessonValidation = [
 
   body("videoDuration")
     .optional()
-    .isInt({ min: 1 })
+    .isInt({ min: 0 })
     .withMessage("مدت ویدئو باید یک عدد غیر منفی باشد"),
 
   body("isFree")

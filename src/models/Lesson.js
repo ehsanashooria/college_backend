@@ -24,7 +24,7 @@ const lessonSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["video", "article", "quiz", "assignment"],
+      enum: ["video", "article"],
       default: "video",
     },
     // Video content
@@ -33,7 +33,7 @@ const lessonSchema = new mongoose.Schema(
       default: "",
     },
     videoDuration: {
-      type: Number, // in seconds
+      type: Number,
       default: 0,
     },
     // Article content

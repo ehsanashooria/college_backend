@@ -11,7 +11,8 @@ exports.getCourses = async (req, res, next) => {
     const filter = { status: "published" };
 
     if (req.query.category) {
-      filter.category = req.query.category;
+      const categories = req.query.category.split(",");
+      filter.category = { $in: categories };
     }
 
     if (req.query.level) {
@@ -100,36 +101,30 @@ exports.getCourseById = async (req, res, next) => {
     const course = await Course.findById(req.params.id)
       .populate(
         "instructor",
-        "firstName lastName avatar bio expertise totalCoursesCreated totalStudentsEnrolled"
+        "firstName lastName avatar bio expertise totalCoursesCreated totalStudentsEnrolled",
       )
-      .populate("category", "name slug");
-
+      .populate("category", "name slug")
+      .populate({
+        path: "sections",
+        select: "title",
+        populate: {
+          path: "lessons",
+          select: "title duration type order isFree", // adjust fields as needed
+        },
+      });
     if (!course) {
       return res.status(404).json({
         success: false,
         message: "دوره یافت نشد",
       });
     }
-
     // If course is not published, only instructor, admin
-    if (course.status !== "published") {
-      if (!req.user) {
-        return res.status(403).json({
-          success: false,
-          message: "این دوره هنوز انتشار نیافته است",
-        });
-      }
-
-      const isInstructor = course.instructor._id.toString() === req.user.id;
-      const isAdmin = req.user.role === "admin";
-
-      if (!isInstructor && !isAdmin) {
-        return res.status(403).json({
-          success: false,
-          message: "این دوره هنوز انتشار نیافته است",
-        });
-      }
-    }
+    // if (course.status !== "published") {
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: "این دوره هنوز انتشار نیافته است",
+    //   });
+    // }
 
     res.status(200).json({
       success: true,
@@ -148,7 +143,7 @@ exports.getCourseBySlug = async (req, res, next) => {
     const course = await Course.findOne({ slug: req.params.slug })
       .populate(
         "instructor",
-        "firstName lastName avatar bio expertise totalCoursesCreated totalStudentsEnrolled"
+        "firstName lastName avatar bio expertise totalCoursesCreated totalStudentsEnrolled",
       )
       .populate("category", "name slug");
 
@@ -325,7 +320,7 @@ exports.updateCourse = async (req, res, next) => {
         _id: { $in: req.body.category },
       });
 
-      if (categoriesCount !== req.category.length) {
+      if (categoriesCount !== req.body.category.length) {
         return res.status(404).json({
           success: false,
           message: "دسته بندی هایی که وارد کرده اید یافت نشدند",
@@ -366,7 +361,7 @@ exports.updateCourse = async (req, res, next) => {
       {
         new: true,
         runValidators: true,
-      }
+      },
     )
       .populate("instructor", "firstName lastName avatar")
       .populate("category", "name slug");
@@ -439,7 +434,7 @@ exports.deleteCourse = async (req, res, next) => {
 // @access  Private (Course Instructor/Admin)
 exports.changeCourseStatus = async (req, res, next) => {
   try {
-    if (!['draft', 'published', 'archived'].includes(req.body.status)) {
+    if (!["draft", "published", "archived"].includes(req.body.status)) {
       return res.status(400).json({
         success: false,
         message: "وضعیت دوره معتبر نیست",
@@ -468,7 +463,7 @@ exports.changeCourseStatus = async (req, res, next) => {
 
     course.status = req.body.status;
 
-    if (course.status === 'published' && !course.publishedAt) {
+    if (course.status === "published" && !course.publishedAt) {
       course.publishedAt = Date.now();
     }
 
@@ -521,86 +516,6 @@ exports.getCourseStudents = async (req, res, next) => {
       success: true,
       count: enrollments.length,
       data: enrollments,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// @desc    Get course statistics
-// @route   GET /api/courses/:id/statistics
-// @access  Private (Course Instructor/Admin)
-exports.getCourseStatistics = async (req, res, next) => {
-  try {
-    const course = await Course.findById(req.params.id);
-
-    if (!course) {
-      return res.status(404).json({
-        success: false,
-        message: "دوره یافت نشد",
-      });
-    }
-
-    // Check ownership
-    if (
-      course.instructor.toString() !== req.user.id &&
-      req.user.role !== "admin"
-    ) {
-      return res.status(403).json({
-        success: false,
-        message: "شما مجوز مشاهده این اطلاعات را ندارید",
-      });
-    }
-
-    // Get enrollment statistics
-    const totalEnrollments = await Enrollment.countDocuments({
-      course: req.params.id,
-      paymentStatus: "completed",
-    });
-
-    const completedEnrollments = await Enrollment.countDocuments({
-      course: req.params.id,
-      isCompleted: true,
-    });
-
-    // Calculate total revenue
-    const enrollments = await Enrollment.find({
-      course: req.params.id,
-      paymentStatus: "completed",
-    });
-
-    const totalRevenue = enrollments.reduce(
-      (sum, enrollment) => sum + enrollment.paymentAmount,
-      0
-    );
-
-    res.status(200).json({
-      success: true,
-      data: {
-        course: {
-          title: course.title,
-          status: course.status,
-        },
-        enrollments: {
-          total: totalEnrollments,
-          completed: completedEnrollments,
-          completionRate:
-            totalEnrollments > 0
-              ? Math.round((completedEnrollments / totalEnrollments) * 100)
-              : 0,
-        },
-        revenue: {
-          total: totalRevenue,
-        },
-        content: {
-          totalLessons: course.totalLessons,
-          totalDuration: course.totalDuration,
-        },
-        rating: {
-          average: course.averageRating,
-          totalReviews: course.totalReviews,
-        },
-      },
     });
   } catch (error) {
     next(error);

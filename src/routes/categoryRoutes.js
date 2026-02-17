@@ -47,14 +47,13 @@ const updateCategoryValidation = [
 ];
 
 // Public routes
-router.get('/', getCategories);
-router.get('/:id', getCategoryById);
-router.get('/slug/:slug', getCategoryBySlug);
+// router.get('/:id', getCategoryById);
+// router.get('/slug/:slug', getCategoryBySlug);
 
+router.get('/', getCategories);
 // Admin only routes
 router.post('/', protect, authorize('admin'), categoryValidation, validateRequest, createCategory);
 router.put('/:id', protect, authorize('admin'), updateCategoryValidation, validateRequest, updateCategory);
 router.delete('/:id', protect, authorize('admin'), deleteCategory);
-router.get('/:id/statistics', protect, authorize('admin'), getCategoryStatistics);
 
 module.exports = router;

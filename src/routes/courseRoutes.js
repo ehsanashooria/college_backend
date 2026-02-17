@@ -10,7 +10,6 @@ const {
     changeCourseStatus,
     getInstructorCourses,
     getCourseStudents,
-    getCourseStatistics
 } = require('../controllers/courseController');
 const { protect, authorize } = require('../middleware/auth');
 const validateRequest = require('../middleware/validateRequest');
@@ -105,6 +104,5 @@ router.put('/:id', protect, authorize('instructor', 'admin'), updateCourseValida
 router.delete('/:id', protect, authorize('instructor', 'admin'), deleteCourse);
 router.put('/:id/changeStatus', protect, authorize('instructor', 'admin'), changeCourseStatus);
 router.get('/:id/students', protect, authorize('instructor', 'admin'), getCourseStudents);
-router.get('/:id/statistics', protect, authorize('instructor', 'admin'), getCourseStatistics);
 
 module.exports = router;
