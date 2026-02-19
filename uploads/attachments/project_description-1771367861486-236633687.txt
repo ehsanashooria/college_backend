@@ -1,0 +1,52 @@
+🔷 Project Title: Online Course Learning and Management System
+
+🟢 Project Objectives:
+
+Design an interactive and user-friendly web application for online education.
+
+Implement user registration and login with different roles (Student, Instructor, Admin).
+
+Create and manage courses and lessons, with the ability to upload videos and files.
+
+Provide a learning environment including video playback, student progress tracking, and a Q&A section.
+
+Adhere to principles of security, scalability, and documentation for future development.
+
+🟣 Core Features:
+🔹 1. Authentication and Roles:
+* User registration and login
+* Admin, Instructor, and Student roles
+
+🔹 2. Course and Lesson Management:
+* Course creation and editing by the instructor
+* Uploading videos and files for lessons
+* Setting course price and tags
+
+🔹 3. Course Enrollment and Progress Tracking:
+* Student enrollment in courses (via payment gateway)
+* Saving progress for each viewed lesson
+
+🔹 4. Q&A Section:
+* Ability for students to ask questions in each lesson
+* Ability for instructors to answer student questions
+
+🔹 5. Dashboards:
+* Instructor dashboard with course management and enrollment statistics
+* Student dashboard: View purchased courses and progress within courses
+
+🔹 6. Admin Panel:
+* Admin panel for managing instructors, students, and courses (CRUD operations on entities)
+
+🟡 Technologies Used: JWT, VueJS, NodeJS
+
+😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂
+
+Steps for Claude:
+1. Authentication (Foundation - Build First) ✅
+2. Categories (Quick setup) ✅
+3. Courses (Core feature) ✅
+4. Sections & Lessons (Content structure) ✅
+5. Enrollment & Payment (Access control) ✅
+6. Progress Tracking (Student experience)
+7. Q&A System (Engagement)
+8. Reviews (Polish)

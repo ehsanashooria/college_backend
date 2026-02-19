@@ -171,7 +171,7 @@ exports.reorderLessons = async (req, res, next) => {
 
     // Update each lesson's order
     const updatePromises = lessons.map((item) =>
-      Lesson.findByIdAndUpdate(item.id, { order: item.order })
+      Lesson.findByIdAndUpdate(item.id, { order: item.order }),
     );
 
     await Promise.all(updatePromises);
@@ -203,6 +203,13 @@ exports.getLessonById = async (req, res, next) => {
       return res.status(404).json({
         success: false,
         message: "این درس وجود ندارد",
+      });
+    }
+
+    if (lesson.isFree) {
+      return res.status(200).json({
+        success: true,
+        data: lesson,
       });
     }
 

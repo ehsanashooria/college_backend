@@ -38,10 +38,6 @@ const courseSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-    previewVideo: {
-      type: String,
-      default: null,
-    },
     level: {
       type: String,
       enum: ["beginner", "intermediate", "advanced", "all-levels"],

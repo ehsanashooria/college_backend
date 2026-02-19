@@ -50,13 +50,14 @@ exports.initiateEnrollment = async (req, res, next) => {
           success: false,
           message: "شما در این دوره شرکت کرده اید",
         });
-      } else if (existingEnrollment.paymentStatus === "pending") {
-        return res.status(400).json({
-          success: false,
-          message: "شما یک پرداخت در حال انتظار برای این دوره دارید",
-          enrollment: existingEnrollment,
-        });
       }
+      // else if (existingEnrollment.paymentStatus === "pending") {
+      //   return res.status(400).json({
+      //     success: false,
+      //     message: "شما یک پرداخت در حال انتظار برای این دوره دارید",
+      //     enrollment: existingEnrollment,
+      //   });
+      // }
     }
 
     // Calculate final price (with discount if available)
@@ -119,6 +120,8 @@ exports.initiateEnrollment = async (req, res, next) => {
       paymentAuthority: paymentResult.authority,
     });
 
+    console.log(paymentResult);
+
     res.status(201).json({
       success: true,
       message: "درخواست پرداخت ثبت شد. کاربر را به درگاه پرداخت هدایت کنید",
@@ -126,49 +129,9 @@ exports.initiateEnrollment = async (req, res, next) => {
         enrollment,
         payment: {
           authority: paymentResult.authority,
-          testPaymentUrl: paymentResult.testPaymentUrl, // For testing (it's in frontend now)
+          testPaymentUrl: paymentResult.paymentUrl, // For testing (it's in frontend now)
           amount: finalPrice,
         },
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// @desc    Simulate successful payment (TESTING ONLY)
-// @route   POST /api/enrollments/test-payment/:authority
-// @access  Public (for testing)
-exports.testPayment = async (req, res, next) => {
-  try {
-    // Only allow in development
-    if (process.env.NODE_ENV === "production") {
-      return res.status(403).json({
-        success: false,
-        message: "پرداخت های تستی در حال حاضر مجاز نیستند",
-      });
-    }
-
-    const { authority } = req.params;
-
-    // Simulate successful payment
-    const result = await paymentGateway.simulateSuccessfulPayment(authority);
-
-    if (!result.success) {
-      return res.status(400).json({
-        success: false,
-        message: result.message,
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "پرداخت با موفقیت شبیه سازی شد. کاربر را به صفحه تایید هدایت کنید",
-      data: {
-        authority: result.authority,
-        refId: result.refId,
-        // This can use callback url from payment gateway - but we put it here hardcoded for testing
-        verifyUrl: `/api/enrollments/verify?Authority=${authority}&Status=OK`,
       },
     });
   } catch (error) {
@@ -183,8 +146,12 @@ exports.verifyEnrollment = async (req, res, next) => {
   try {
     const { Authority, Status } = req.query;
 
-    // Check if payment was successful (Status = 'OK' from ZarinPal)
     if (Status !== "OK") {
+      await Enrollment.findOneAndUpdate(
+        { paymentAuthority: Authority, paymentStatus: "pending" },
+        { paymentStatus: "failed" },
+      );
+
       return res.redirect(
         `${process.env.FRONTEND_URL}/payment/failed?reason=cancelled`,
       );
@@ -248,7 +215,7 @@ exports.verifyEnrollment = async (req, res, next) => {
 exports.getMyEnrollments = async (req, res, next) => {
   try {
     // Filter
-    const filter = { student: req.user.id };
+    const filter = { student: req.user.id, paymentStatus: 'completed' };
 
     // Pagination
     const page = parseInt(req.query.page) || 1;
@@ -258,8 +225,7 @@ exports.getMyEnrollments = async (req, res, next) => {
     const enrollments = await Enrollment.find(filter)
       .populate({
         path: "course",
-        select:
-          "title slug thumbnail instructor totalDuration totalLessons",
+        select: "title slug thumbnail instructor totalDuration totalLessons",
         populate: {
           path: "instructor",
           select: "firstName lastName avatar",
@@ -338,6 +304,7 @@ exports.checkEnrollment = async (req, res, next) => {
     const enrollment = await Enrollment.findOne({
       student: req.user.id,
       course: req.params.courseId,
+      paymentStatus: 'completed',
     });
 
     if (!enrollment) {
@@ -350,7 +317,7 @@ exports.checkEnrollment = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      isEnrolled: enrollment.paymentStatus === "completed",
+      isEnrolled: true,
       enrollment,
     });
   } catch (error) {

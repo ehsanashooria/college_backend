@@ -3,7 +3,6 @@ const { body } = require("express-validator");
 const {
   initiateEnrollment,
   verifyEnrollment,
-  testPayment,
   getMyEnrollments,
   getEnrollmentById,
   checkEnrollment,
@@ -33,8 +32,6 @@ router.post(
   initiateEnrollment,
 );
 
-// Testing route (development only)
-router.post("/test-payment/:authority", testPayment);
 
 // Public route - payment gateway callback
 router.get("/verify", verifyEnrollment);

@@ -64,6 +64,6 @@ const enrollmentSchema = new mongoose.Schema(
 );
 
 // Compound index to ensure one enrollment per student per course
-enrollmentSchema.index({ student: 1, course: 1 }, { unique: true });
+enrollmentSchema.index({ student: 1, course: 1, paymentStatus: 1 }, { unique: true });
 
 module.exports = mongoose.model("Enrollment", enrollmentSchema);

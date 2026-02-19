@@ -202,6 +202,7 @@ exports.getInstructorCourses = async (req, res, next) => {
 
     const courses = await Course.find(filter)
       .populate("category", "name slug")
+      .populate("sections", "title")
       .sort({ createdAt: -1 })
       .limit(limit)
       .skip(skip);
@@ -232,7 +233,6 @@ exports.createCourse = async (req, res, next) => {
       shortDescription,
       category,
       thumbnail,
-      previewVideo,
       level,
       price,
       discountPrice,
@@ -261,7 +261,6 @@ exports.createCourse = async (req, res, next) => {
       instructor: req.user.id,
       category,
       thumbnail,
-      previewVideo,
       level,
       price,
       discountPrice,
@@ -334,7 +333,6 @@ exports.updateCourse = async (req, res, next) => {
       shortDescription,
       category,
       thumbnail,
-      previewVideo,
       level,
       price,
       discountPrice,
@@ -351,7 +349,6 @@ exports.updateCourse = async (req, res, next) => {
         shortDescription,
         category,
         thumbnail,
-        previewVideo,
         level,
         price,
         discountPrice,

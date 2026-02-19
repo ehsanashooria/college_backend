@@ -5,6 +5,7 @@ const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const connectDB = require("./config/database");
 const errorHandler = require("./middleware/errorHandler");
+const path = require('path');
 
 // Load env vars
 dotenv.config();
@@ -22,6 +23,16 @@ app.use(
     credentials: true,
   })
 );
+
+app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
+    setHeaders: (res, filePath) => {
+        // Allow cross-origin access
+        res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5173');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        // Allow embedding in iframes if needed
+        res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    }
+}));
 
 // Rate limiting
 // const limiter = rateLimit({
@@ -45,11 +56,7 @@ const sectionDetailsRoutes = require("./routes/sectionDetailsRoutes");
 const lessonRoutes = require("./routes/lessonRoutes");
 const lessonDetailsRoutes = require("./routes/lessonDetailsRoutes");
 const enrollmentRoutes = require('./routes/enrollmentRoutes');
-const progressRoutes = require('./routes/progressRoutes');
-const questionRoutes = require('./routes/questionRoutes');
-const answerRoutes = require('./routes/answerRoutes');
-
-
+const uploadRoutes = require('./routes/uploadRoutes');
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
@@ -60,9 +67,7 @@ app.use("/api/sections", sectionDetailsRoutes);
 app.use("/api/sections/:sectionId/lessons", lessonRoutes);
 app.use("/api/lessons", lessonDetailsRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
-app.use('/api/progress', progressRoutes);
-app.use('/api/questions', questionRoutes);
-app.use('/api/answers', answerRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Health check
 app.get("/health", (req, res) => {
